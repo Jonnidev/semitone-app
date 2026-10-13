@@ -23,7 +23,21 @@ jobs:
           set -euo pipefail
           rm -rf models && mkdir -p models/modnet models/birefnet /tmp/m
           curl -fL --retry 3 -o /tmp/m/modnet.onnx  https://huggingface.co/Xenova/modnet/resolve/main/onnx/model.onnx
-          curl -fL --retry 3 -o /tmp/m/birefnet.onnx https://huggingface.co/onnx-community/BiRefNet_lite-ONNX/resolve/main/onnx/model.onnx
+          curl -fL --retry 3 -o /tmp/m/birefnet-orig.onnx https://huggingface.co/onnx-community/BiRefNet_lite-ONNX/resolve/main/onnx/model.onnx
+          # Simplifica el grafo (forma de entrada fija 1024x1024): pliega constantes y resuelve los Slice
+          # dinámicos que hacen fallar a ONNX Runtime Web con WebGPU.
+          pip install --quiet onnx onnxsim onnxruntime
+          python3 - <<'EOF'
+          import onnx, collections
+          from onnxsim import simplify
+          m = onnx.load("/tmp/m/birefnet-orig.onnx")
+          before = collections.Counter(n.op_type for n in m.graph.node)
+          ms, ok = simplify(m)
+          assert ok, "onnxsim no pudo validar el modelo simplificado"
+          after = collections.Counter(n.op_type for n in ms.graph.node)
+          print("nodos:", len(m.graph.node), "->", len(ms.graph.node), "| Slice:", before["Slice"], "->", after["Slice"])
+          onnx.save(ms, "/tmp/m/birefnet.onnx")
+          EOF
           split -b 20000000 -d -a 2 /tmp/m/modnet.onnx   models/modnet/model.onnx.part
           split -b 20000000 -d -a 2 /tmp/m/birefnet.onnx models/birefnet/model.onnx.part
           python3 - <<'EOF'
