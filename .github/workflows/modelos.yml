@@ -23,9 +23,9 @@ jobs:
           set -euo pipefail
           rm -rf models && mkdir -p models/modnet models/birefnet /tmp/m
           curl -fL --retry 3 -o /tmp/m/modnet.onnx  https://huggingface.co/Xenova/modnet/resolve/main/onnx/model.onnx
-          curl -fL --retry 3 -o /tmp/m/birefnet.onnx https://huggingface.co/onnx-community/BiRefNet_lite-ONNX/resolve/main/onnx/model_fp16.onnx
+          curl -fL --retry 3 -o /tmp/m/birefnet.onnx https://huggingface.co/onnx-community/BiRefNet_lite-ONNX/resolve/main/onnx/model.onnx
           split -b 20000000 -d -a 2 /tmp/m/modnet.onnx   models/modnet/model.onnx.part
-          split -b 20000000 -d -a 2 /tmp/m/birefnet.onnx models/birefnet/model_fp16.onnx.part
+          split -b 20000000 -d -a 2 /tmp/m/birefnet.onnx models/birefnet/model.onnx.part
           python3 - <<'EOF'
           import json, os
           def info(d, src):
@@ -42,7 +42,7 @@ jobs:
           Generados por `.github/workflows/modelos.yml`. Divididos en partes de 20 MB.
 
           - `modnet/`: [Xenova/modnet](https://huggingface.co/Xenova/modnet) (Apache-2.0), fp32.
-          - `birefnet/`: [onnx-community/BiRefNet_lite-ONNX](https://huggingface.co/onnx-community/BiRefNet_lite-ONNX) (MIT), fp16.
+          - `birefnet/`: [onnx-community/BiRefNet_lite-ONNX](https://huggingface.co/onnx-community/BiRefNet_lite-ONNX) (MIT), fp32. La versión fp16 falla en ONNX Runtime Web con WebGPU.
           EOF
 
       - name: Guardar en el repositorio
