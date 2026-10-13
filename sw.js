@@ -1,9 +1,9 @@
 // Service worker: permite usar la app sin conexión una vez cargada.
 // Al publicar una versión nueva, sube el número de VERSION para renovar la caché.
-const VERSION = 'trama-v1';
+const VERSION = 'trama-v2';
 const ASSETS = [
   './', './index.html', './css/app.css',
-  './js/app.js', './js/core.js', './js/projects.js', './js/plate-worker.js', './js/ai-worker.js',
+  './js/app.js', './js/core.js', './js/projects.js', './js/loaders.js', './js/plate-worker.js', './js/ai-worker.js',
   './manifest.webmanifest', './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png',
 ];
 

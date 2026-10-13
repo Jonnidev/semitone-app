@@ -2,6 +2,7 @@
 // Todo el procesamiento ocurre en el navegador del usuario.
 import { clamp, mulberry32, tick, hex2rgb, rgb2hex, rgb2lab, labOf, lab2rgb, colorName, screenParams, sampleCov, hitAt,
   renderPlate, encodePNG, encodePDF, makeZip, u8 } from './core.js';
+import { decodeFile, ACCEPT } from './loaders.js';
 import { listProjects, saveProject, loadProject, deleteProject } from './projects.js';
 
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
@@ -407,10 +408,17 @@ function renderUI(){renderInks();renderPlates();renderBg();
   $('#hdrMeta').textContent=`${PL.length} placas · ${S.screen==='am'?S.lpi+' LPI':'FM '+fmt(S.grain,2)+' mm'} · ${S.dpi} DPI`}
 
 /* ---------- loading images ---------- */
-function loadFile(f){if(!f||!/^image\//.test(f.type)){toast('Ese archivo no es una imagen. Usa PNG, JPG o WebP.');return}
-  const url=URL.createObjectURL(f),im=new Image();im.onload=()=>{setImage(im,f.name||'imagen pegada',false,f);URL.revokeObjectURL(url);toast('Imagen cargada: '+(f.name||'desde el portapapeles'))};
-  im.onerror=()=>{toast('No se pudo leer la imagen. Prueba con PNG o JPG.');URL.revokeObjectURL(url)};im.src=url}
+let loadingFile=false;
+async function loadFile(f){if(!f)return;if(loadingFile)return;loadingFile=true;const meta=$('#imgMeta');meta.classList.remove('err');
+  busy.show('Cargando imagen');busy.set(0.15,f.name||'Imagen pegada');
+  try{const r=await decodeFile(f,msg=>busy.set(0.5,msg));busy.set(0.8,'Separando colores…');await tick();
+    // Para HEIC, SVG, PDF y AI se guarda una copia rasterizada en los proyectos.
+    setImage(r.source,f.name||'imagen pegada',false,r.kind==='image'?f:null);toast('Imagen cargada: '+(f.name||'desde el portapapeles'))}
+  catch(e){const msg=e.message||String(e);meta.textContent=msg;meta.classList.add('err');toast(msg)}
+  finally{busy.hide();loadingFile=false}}
+$('#file').accept=ACCEPT;
 $('#file').addEventListener('change',e=>{loadFile(e.target.files[0]);e.target.value=''});
+$('#dropZone').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('#file').click()}});
 let dragN=0;
 ['dragenter','dragover'].forEach(t=>document.addEventListener(t,e=>{if(![...(e.dataTransfer?.types||[])].includes('Files'))return;e.preventDefault();if(t==='dragenter'){dragN++;$('#dropCover').hidden=false;$('#dropZone').classList.add('over')}}));
 document.addEventListener('dragleave',()=>{dragN=Math.max(0,dragN-1);if(!dragN){$('#dropCover').hidden=true;$('#dropZone').classList.remove('over')}});

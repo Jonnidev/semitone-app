@@ -32,10 +32,11 @@
   <aside class="panel rail" aria-label="Ajustes">
     <section class="grp">
       <h2>Imagen</h2>
-      <label class="drop" id="dropZone" for="file">
-        <input type="file" id="file" accept="image/*" hidden>
+      <label class="drop" id="dropZone" for="file" tabindex="0">
+        <input type="file" id="file" class="vh" tabindex="-1" accept="image/*,.heic,.heif,.svg,.pdf,.ai">
         <b>Subir imagen</b>
         <span>o arrástrala aquí, o pégala con Ctrl+V</span>
+        <span class="fmts">PNG · JPG · WebP · HEIC · SVG · PDF · AI</span>
       </label>
       <p class="meta" id="imgMeta">Imagen de ejemplo</p>
       <div class="field"><div class="row"><label for="bright">Brillo</label><output id="bright-o"></output></div><input type="range" id="bright" data-k="bright" min="-50" max="50" step="1"></div>
