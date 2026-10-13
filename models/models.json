@@ -1,0 +1,20 @@
+{
+  "modnet": {
+    "files": [
+      "modnet/model.onnx.part00",
+      "modnet/model.onnx.part01"
+    ],
+    "size": 25888640
+  },
+  "birefnet": {
+    "files": [
+      "birefnet/model_fp16.onnx.part00",
+      "birefnet/model_fp16.onnx.part01",
+      "birefnet/model_fp16.onnx.part02",
+      "birefnet/model_fp16.onnx.part03",
+      "birefnet/model_fp16.onnx.part04",
+      "birefnet/model_fp16.onnx.part05"
+    ],
+    "size": 114538221
+  }
+}
