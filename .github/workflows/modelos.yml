@@ -1,0 +1,53 @@
+# Descarga los modelos de IA desde Hugging Face y los guarda en el repositorio,
+# divididos en partes de 20 MB, para que el sitio los sirva desde su propio dominio
+# (Cloudflare acepta archivos de hasta 25 MiB).
+name: Descargar modelos de IA
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/modelos.yml']
+
+permissions:
+  contents: write
+
+jobs:
+  modelos:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Descargar y dividir
+        run: |
+          set -euo pipefail
+          rm -rf models && mkdir -p models/modnet models/birefnet /tmp/m
+          curl -fL --retry 3 -o /tmp/m/modnet.onnx  https://huggingface.co/Xenova/modnet/resolve/main/onnx/model.onnx
+          curl -fL --retry 3 -o /tmp/m/birefnet.onnx https://huggingface.co/onnx-community/BiRefNet_lite-ONNX/resolve/main/onnx/model_fp16.onnx
+          split -b 20000000 -d -a 2 /tmp/m/modnet.onnx   models/modnet/model.onnx.part
+          split -b 20000000 -d -a 2 /tmp/m/birefnet.onnx models/birefnet/model_fp16.onnx.part
+          python3 - <<'EOF'
+          import json, os
+          def info(d, src):
+              parts = sorted(f for f in os.listdir(d) if '.part' in f)
+              return {"files": [f"{os.path.basename(d)}/{p}" for p in parts], "size": os.path.getsize(src)}
+          m = {"modnet": info("models/modnet", "/tmp/m/modnet.onnx"),
+               "birefnet": info("models/birefnet", "/tmp/m/birefnet.onnx")}
+          json.dump(m, open("models/models.json", "w"), indent=2)
+          print(json.dumps(m, indent=2))
+          EOF
+          cat > models/README.md <<'EOF'
+          # Modelos de IA
+
+          Generados por `.github/workflows/modelos.yml`. Divididos en partes de 20 MB.
+
+          - `modnet/`: [Xenova/modnet](https://huggingface.co/Xenova/modnet) (Apache-2.0), fp32.
+          - `birefnet/`: [onnx-community/BiRefNet_lite-ONNX](https://huggingface.co/onnx-community/BiRefNet_lite-ONNX) (MIT), fp16.
+          EOF
+
+      - name: Guardar en el repositorio
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add models
+          git diff --cached --quiet && echo "Sin cambios" || (git commit -m "Modelos de IA alojados en el sitio" && git push)

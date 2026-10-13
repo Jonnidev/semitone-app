@@ -1,7 +1,7 @@
 // Service worker: permite usar la app sin conexión una vez cargada.
 // Siempre intenta la red primero, así cada publicación nueva se ve de inmediato;
 // la caché solo se usa cuando no hay conexión.
-const VERSION = 'trama-v3';
+const VERSION = 'trama-v4';
 const ASSETS = [
   './', './index.html', './css/app.css',
   './js/app.js', './js/core.js', './js/projects.js', './js/loaders.js', './js/plate-worker.js', './js/ai-worker.js',
@@ -16,7 +16,7 @@ self.addEventListener('activate', e => {
 });
 self.addEventListener('fetch', e => {
   const req = e.request, url = new URL(req.url);
-  if (req.method !== 'GET' || url.origin !== location.origin) return; // modelos de IA, fuentes y CDN quedan fuera
+  if (req.method !== 'GET' || url.origin !== location.origin || url.pathname.includes('/models/')) return; // modelos de IA (tienen su propia caché), fuentes y CDN quedan fuera
   e.respondWith(
     fetch(req, { cache: 'no-cache' }).then(r => {
       if (r.ok) { const copy = r.clone(); caches.open(VERSION).then(c => c.put(req.mode === 'navigate' ? './index.html' : req, copy)); }

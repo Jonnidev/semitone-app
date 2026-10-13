@@ -347,7 +347,7 @@ $('#addInk').onclick=()=>{if(S.spotInks.length>=10)return;const pool=['#FFFFFF',
 
 function renderBg(){$('#bgOpts').style.display=S.bgOn?'flex':'none';
   $('#bgColorOpts').hidden=S.bgMethod!=='color';$('#bgAiOpts').hidden=S.bgMethod!=='ai';
-  $('#aiModelNote').textContent=S.aiModel==='people'?'Para retratos y personas. Descarga de 26 MB la primera vez.':'Para productos, mascotas y objetos. Descarga de 115 MB (224 MB si tu navegador no tiene WebGPU) la primera vez.';
+  $('#aiModelNote').textContent=S.aiModel==='people'?'Para retratos y personas. Descarga de 26 MB la primera vez.':'Para productos, mascotas y objetos. Descarga de 115 MB la primera vez y necesita WebGPU (Chrome o Edge actualizados, o Safari 26).';
   $('#aiRun').textContent=IMG.aiMatte&&IMG.aiModel===S.aiModel?'Volver a procesar con IA':'Quitar fondo con IA';
   $('#aiStatus').innerHTML=IMG.aiMatte?`<span class="pill ok">Máscara lista (${IMG.aiModel==='people'?'personas':'cualquier objeto'}, ${IMG.aiDevice==='webgpu'?'con GPU':'con CPU'}).</span>`:'';
   $('#bgChips').innerHTML=S.bgColors.length?S.bgColors.map((h,i)=>`<span class="bgchip"><i style="background:${h}"></i>${h}<button type="button" data-bgrm="${i}" aria-label="Quitar ${h}">${XI}</button></span>`).join(''):'<span class="note">Sin colores. Usa Detectar o elige uno en la imagen.</span>';
@@ -507,9 +507,9 @@ $('#aiRun').onclick=()=>{if(working)return;working=true;const model=S.aiModel;le
   const done=()=>{w.onmessage=null;w.onerror=null;working=false;busy.hide()};
   w.onmessage=e=>{const d=e.data;
     if(d.stage==='download'){busy.set(0.05+0.8*d.loaded/d.total,`Descargando el modelo: ${MB(d.loaded)} de ${MB(d.total)} MB. Solo pasa la primera vez.`)}
+    else if(d.stage==='init'){busy.set(0.86,'Preparando el modelo…')}
     else if(d.stage==='run'){busy.set(0.9,d.device==='webgpu'?'Procesando con la GPU…':'Procesando con la CPU, puede tardar unos segundos…')}
-    else if(d.err){done();aiWorker.terminate();aiWorker=null;const net=/fetch|network|load/i.test(d.err);
-      const msg=net?'No se pudo descargar el modelo de IA desde huggingface.co. Revisa tu conexión, o si un bloqueador o la red de tu trabajo bloquea ese sitio.':'No se pudo quitar el fondo con IA: '+d.err;
+    else if(d.err){done();aiWorker.terminate();aiWorker=null;const msg='No se pudo quitar el fondo con IA. '+d.err;
       $('#aiStatus').innerHTML=`<span class="pill warn">${esc(msg)}</span>`;toast(msg)}
     else if(d.done){done();IMG.aiMatte=d.matte;IMG.aiModel=model;IMG.aiDevice=d.device;S.bgOn=true;S.bgMethod='ai';syncControls();run(-1);toast('Fondo quitado con IA. Ajusta la dureza del borde o retoca con el pincel.')}};
   w.onerror=e=>{done();aiWorker=null;toast('No se pudo cargar el modelo de IA. Revisa tu conexión e inténtalo de nuevo.')};
