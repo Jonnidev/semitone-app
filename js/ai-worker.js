@@ -38,6 +38,11 @@ async function getManifest() {
 async function fetchModel(key) {
   const m = (await getManifest())[key];
   const cache = await caches.open(CACHE).catch(() => null);
+  if (cache) {
+    // Borra partes de versiones anteriores de este modelo que ya no se usan.
+    const keep = new Set(m.files.map(f => new URL(f, MODELS_URL).href)), prefix = new URL(key + '/', MODELS_URL).href;
+    for (const req of await cache.keys()) if (req.url.startsWith(prefix) && !keep.has(req.url)) await cache.delete(req);
+  }
   const out = new Uint8Array(m.size); let off = 0, done = 0;
   for (const f of m.files) {
     const url = new URL(f, MODELS_URL).href;
