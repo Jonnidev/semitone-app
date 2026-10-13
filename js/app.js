@@ -508,7 +508,9 @@ $('#aiRun').onclick=()=>{if(working)return;working=true;const model=S.aiModel;le
   w.onmessage=e=>{const d=e.data;
     if(d.stage==='download'){busy.set(0.05+0.8*d.loaded/d.total,`Descargando el modelo: ${MB(d.loaded)} de ${MB(d.total)} MB. Solo pasa la primera vez.`)}
     else if(d.stage==='run'){busy.set(0.9,d.device==='webgpu'?'Procesando con la GPU…':'Procesando con la CPU, puede tardar unos segundos…')}
-    else if(d.err){done();aiWorker.terminate();aiWorker=null;toast('No se pudo quitar el fondo con IA: '+d.err)}
+    else if(d.err){done();aiWorker.terminate();aiWorker=null;const net=/fetch|network|load/i.test(d.err);
+      const msg=net?'No se pudo descargar el modelo de IA desde huggingface.co. Revisa tu conexión, o si un bloqueador o la red de tu trabajo bloquea ese sitio.':'No se pudo quitar el fondo con IA: '+d.err;
+      $('#aiStatus').innerHTML=`<span class="pill warn">${esc(msg)}</span>`;toast(msg)}
     else if(d.done){done();IMG.aiMatte=d.matte;IMG.aiModel=model;IMG.aiDevice=d.device;S.bgOn=true;S.bgMethod='ai';syncControls();run(-1);toast('Fondo quitado con IA. Ajusta la dureza del borde o retoca con el pincel.')}};
   w.onerror=e=>{done();aiWorker=null;toast('No se pudo cargar el modelo de IA. Revisa tu conexión e inténtalo de nuevo.')};
   w.postMessage({model,rgba:new Uint8ClampedArray(IMG.src),w:IMG.w,h:IMG.h})};
