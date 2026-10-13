@@ -8,13 +8,19 @@
   },
   "birefnet": {
     "files": [
-      "birefnet/model_fp16.onnx.part00",
-      "birefnet/model_fp16.onnx.part01",
-      "birefnet/model_fp16.onnx.part02",
-      "birefnet/model_fp16.onnx.part03",
-      "birefnet/model_fp16.onnx.part04",
-      "birefnet/model_fp16.onnx.part05"
+      "birefnet/model.onnx.part00",
+      "birefnet/model.onnx.part01",
+      "birefnet/model.onnx.part02",
+      "birefnet/model.onnx.part03",
+      "birefnet/model.onnx.part04",
+      "birefnet/model.onnx.part05",
+      "birefnet/model.onnx.part06",
+      "birefnet/model.onnx.part07",
+      "birefnet/model.onnx.part08",
+      "birefnet/model.onnx.part09",
+      "birefnet/model.onnx.part10",
+      "birefnet/model.onnx.part11"
     ],
-    "size": 114538221
+    "size": 224005088
   }
 }
