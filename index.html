@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Trama Serigráfica</title>
+<meta name="description" content="Separación de color y semitono gratis para serigrafía: tintas planas, proceso simulado, CMYK, base blanca, quitar fondo con IA y fotolitos PNG o PDF listos para imprimir.">
+<meta name="theme-color" content="#2445D4">
+<meta property="og:title" content="Trama Serigráfica">
+<meta property="og:description" content="Convierte cualquier imagen en fotolitos de semitono para serigrafía, gratis y desde el navegador.">
+<meta property="og:type" content="website">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">Trama<i>·</i>Serigráfica</div>
+    <div class="tag">Separación de color y semitono para fotolitos de serigrafía. Todo se procesa en tu navegador.</div>
+    <div class="hdr-right" id="hdrMeta"></div>
+    <div class="hdr-actions">
+      <button class="btn" type="button" id="projBtn">Proyectos</button>
+      <button class="btn" type="button" id="installBtn" hidden>Instalar app</button>
+    </div>
+  </header>
+
+  <aside class="panel rail" aria-label="Ajustes">
+    <section class="grp">
+      <h2>Imagen</h2>
+      <label class="drop" id="dropZone" for="file">
+        <input type="file" id="file" accept="image/*" hidden>
+        <b>Subir imagen</b>
+        <span>o arrástrala aquí, o pégala con Ctrl+V</span>
+      </label>
+      <p class="meta" id="imgMeta">Imagen de ejemplo</p>
+      <div class="field"><div class="row"><label for="bright">Brillo</label><output id="bright-o"></output></div><input type="range" id="bright" data-k="bright" min="-50" max="50" step="1"></div>
+      <div class="field"><div class="row"><label for="contrast">Contraste</label><output id="contrast-o"></output></div><input type="range" id="contrast" data-k="contrast" min="-50" max="50" step="1"></div>
+    </section>
+
+    <section class="grp" id="bgSec">
+      <h2>Quitar fondo</h2>
+      <label class="check"><input type="checkbox" id="bgOn" data-k="bgOn"><span>Quitar el fondo de la imagen<small>Lo que se quita queda sin tinta en todas las placas.</small></span></label>
+      <div id="bgSuggest"></div>
+      <div id="bgOpts" style="display:flex;flex-direction:column;gap:12px">
+        <div class="seg" role="radiogroup" aria-label="Método" data-k="bgMethod">
+          <button type="button" role="radio" data-v="color">Por color</button>
+          <button type="button" role="radio" data-v="ai">Con IA</button>
+        </div>
+        <div id="bgAiOpts" style="display:flex;flex-direction:column;gap:12px">
+          <div class="field"><span class="lbl">Qué hay en la imagen</span>
+            <div class="seg" role="radiogroup" aria-label="Modelo de IA" data-k="aiModel">
+              <button type="button" role="radio" data-v="people">Personas</button>
+              <button type="button" role="radio" data-v="general">Cualquier objeto</button>
+            </div>
+            <p class="note" id="aiModelNote"></p></div>
+          <button class="btn primary" type="button" id="aiRun">Quitar fondo con IA</button>
+          <div id="aiStatus"></div>
+          <div class="field"><div class="row"><label for="aiHard">Dureza del borde</label><output id="aiHard-o"></output></div><input type="range" id="aiHard" data-k="aiHard" min="0" max="95" step="1"></div>
+          <p class="note">La IA corre en tu equipo: la imagen no se sube a ningún servidor.</p>
+        </div>
+        <div id="bgColorOpts" style="display:flex;flex-direction:column;gap:12px">
+        <div class="field"><span class="lbl">Colores de fondo</span>
+          <div class="swatches" id="bgChips"></div>
+          <div class="btnrow"><button class="btn" type="button" id="bgAuto">Detectar</button><button class="btn" type="button" id="bgPick" aria-pressed="false">Elegir en la imagen</button></div>
+        </div>
+        <div class="field"><span class="lbl">Qué se quita</span>
+          <div class="seg" role="radiogroup" aria-label="Alcance" data-k="bgScope">
+            <button type="button" role="radio" data-v="edges">Lo conectado al borde</button>
+            <button type="button" role="radio" data-v="all">Ese color en todo</button>
+          </div></div>
+        <div class="field"><div class="row"><label for="bgTol">Tolerancia</label><output id="bgTol-o"></output></div><input type="range" id="bgTol" data-k="bgTol" min="1" max="60" step="1"></div>
+        <div class="field"><div class="row"><label for="bgSoft">Borde suave</label><output id="bgSoft-o"></output></div><input type="range" id="bgSoft" data-k="bgSoft" min="0" max="30" step="1"></div>
+        </div>
+        <div class="field"><div class="row"><label for="bgChoke">Contraer el borde</label><output id="bgChoke-o"></output></div><input type="range" id="bgChoke" data-k="bgChoke" min="0" max="4" step="1"></div>
+        <label class="check"><input type="checkbox" id="bgDespill" data-k="bgDespill"><span>Limpiar el halo del fondo<small>Quita el tinte del fondo en los bordes semitransparentes.</small></span></label>
+        <label class="check"><input type="checkbox" id="bgShow" data-k="bgShow"><span>Marcar en rojo lo eliminado</span></label>
+      </div>
+      <span class="sub">Retoque a mano</span>
+      <div class="seg" role="radiogroup" aria-label="Herramienta" data-k="tool">
+        <button type="button" role="radio" data-v="pan">Mover</button>
+        <button type="button" role="radio" data-v="erase">Borrar</button>
+        <button type="button" role="radio" data-v="restore">Restaurar</button>
+      </div>
+      <div class="field"><div class="row"><label for="bgBrush">Tamaño del pincel</label><output id="bgBrush-o"></output></div><input type="range" id="bgBrush" data-k="bgBrush" min="6" max="160" step="1"></div>
+      <div class="btnrow"><button class="btn" type="button" id="bgUndo">Deshacer trazo</button><button class="btn" type="button" id="bgClear">Borrar retoques</button></div>
+      <button class="btn" type="button" id="bgDl">Descargar imagen sin fondo (.png)</button>
+    </section>
+
+    <section class="grp">
+      <h2>Prenda</h2>
+      <div class="swatches" id="garmentSw">
+        <button class="sw-btn" type="button" data-c="#FFFFFF" style="background:#FFFFFF" aria-label="Blanca"></button>
+        <button class="sw-btn" type="button" data-c="#E9E4D8" style="background:#E9E4D8" aria-label="Natural"></button>
+        <button class="sw-btn" type="button" data-c="#8E9197" style="background:#8E9197" aria-label="Gris jaspe"></button>
+        <button class="sw-btn" type="button" data-c="#1F2A44" style="background:#1F2A44" aria-label="Azul marino"></button>
+        <button class="sw-btn" type="button" data-c="#7A1F2B" style="background:#7A1F2B" aria-label="Burdeo"></button>
+        <button class="sw-btn" type="button" data-c="#2F4A33" style="background:#2F4A33" aria-label="Verde militar"></button>
+        <button class="sw-btn" type="button" data-c="#141414" style="background:#141414" aria-label="Negra"></button>
+        <span class="colorpick" title="Otro color"><input type="color" id="garment" data-k="garment" aria-label="Color de prenda personalizado"><span>+</span></span>
+        <span class="hexlbl" id="garmentHex"></span>
+      </div>
+    </section>
+
+    <section class="grp">
+      <h2>Separación</h2>
+      <div class="seg" role="radiogroup" aria-label="Modo de separación" data-k="mode">
+        <button type="button" role="radio" data-v="mono">Una tinta</button>
+        <button type="button" role="radio" data-v="spot">Tintas planas</button>
+        <button type="button" role="radio" data-v="cmyk">CMYK</button>
+      </div>
+
+      <div data-show="mono">
+        <div class="field"><div class="row"><span class="lbl">Color de tinta</span><span class="val" id="monoHex"></span></div>
+          <div class="swatches"><span class="colorpick" style="border-style:solid" id="monoChip"><input type="color" id="monoInk" data-k="monoInk" aria-label="Color de tinta"></span><span class="note">El fotolito siempre sale en negro; el color sirve para separar y previsualizar.</span></div>
+        </div>
+        <div class="field"><span class="lbl">Qué define la cantidad de tinta</span>
+          <div class="seg" role="radiogroup" aria-label="Fuente de tono" data-k="monoSrc">
+            <button type="button" role="radio" data-v="lum">Luminosidad</button>
+            <button type="button" role="radio" data-v="color">Parecido al color</button>
+          </div>
+        </div>
+        <div class="field" id="monoTolF"><div class="row"><label for="monoTol">Tolerancia de color</label><output id="monoTol-o"></output></div><input type="range" id="monoTol" data-k="monoTol" min="5" max="80" step="1"></div>
+        <label class="check"><input type="checkbox" id="monoInvert" data-k="monoInvert"><span>Invertir tonos</span></label>
+      </div>
+
+      <div data-show="spot">
+        <div class="field"><div class="row"><label for="spotN">Número de tintas</label><output id="spotN-o"></output></div><input type="range" id="spotN" data-k="spotN" min="1" max="8" step="1"></div>
+        <div class="inks" id="inkList"></div>
+        <div class="btnrow"><button class="btn" type="button" id="detectBtn">Detectar colores</button><button class="btn" type="button" id="addInk">Agregar tinta</button></div>
+        <div class="field"><div class="row"><label for="softness">Transición entre tintas</label><output id="softness-o"></output></div><input type="range" id="softness" data-k="softness" min="3" max="60" step="1"><div class="ends"><span>Planas, bordes duros</span><span>Proceso simulado</span></div></div>
+        <label class="check"><input type="checkbox" id="knock" data-k="knock"><span>Calar el color de la prenda<small>Donde la imagen tiene el color de la polera no se imprime tinta.</small></span></label>
+      </div>
+
+      <div data-show="mono spot" id="ubBlock">
+        <div class="field"><label for="ubOn">Base blanca (underbase)</label>
+          <select id="ubOn" data-k="ubOn"><option value="auto">Automática según la prenda</option><option value="on">Siempre</option><option value="off">Sin base</option></select></div>
+        <div class="two">
+          <div class="field"><div class="row"><label for="ubStrength">Intensidad</label><output id="ubStrength-o"></output></div><input type="range" id="ubStrength" data-k="ubStrength" min="30" max="100" step="1"></div>
+          <div class="field"><div class="row"><label for="ubChoke">Contracción</label><output id="ubChoke-o"></output></div><input type="range" id="ubChoke" data-k="ubChoke" min="0" max="4" step="1"></div>
+        </div>
+      </div>
+
+      <div data-show="cmyk">
+        <div class="field"><div class="row"><label for="gcr">Reemplazo de gris (GCR)</label><output id="gcr-o"></output></div><input type="range" id="gcr" data-k="gcr" min="0" max="100" step="1"></div>
+        <p class="note">CMYK usa tintas transparentes de proceso: funciona sobre prenda blanca o muy clara.</p>
+      </div>
+    </section>
+
+    <section class="grp">
+      <h2>Trama</h2>
+      <div class="seg" role="radiogroup" aria-label="Tipo de trama" data-k="screen">
+        <button type="button" role="radio" data-v="am">AM · puntos</button>
+        <button type="button" role="radio" data-v="fm">FM · estocástica</button>
+      </div>
+      <div data-show="am">
+        <div class="field"><label for="shape">Forma del punto</label>
+          <select id="shape" data-k="shape">
+            <option value="round">Redondo</option><option value="euclid">Euclidiano (redondo invertido)</option><option value="ellipse">Elíptico</option><option value="square">Cuadrado</option><option value="diamond">Diamante</option><option value="line">Línea</option>
+          </select></div>
+        <div class="field"><div class="row"><label for="lpi">Lineatura</label><output id="lpi-o"></output></div><input type="range" id="lpi" data-k="lpi" min="15" max="110" step="1"></div>
+        <div class="field"><div class="row"><label for="angle">Ángulo base</label><output id="angle-o"></output></div><input type="range" id="angle" data-k="angle" min="0" max="90" step="0.5"><p class="note">Mover el ángulo base reinicia los ángulos que cambiaste por placa.</p></div>
+        <div class="field"><label for="mesh">Malla de la pantalla</label>
+          <select id="mesh" data-k="mesh"></select></div>
+        <div id="meshPill"></div>
+      </div>
+      <div data-show="fm">
+        <div class="field"><div class="row"><label for="grain">Tamaño de grano</label><output id="grain-o"></output></div><input type="range" id="grain" data-k="grain" min="0.06" max="0.5" step="0.01"></div>
+        <p class="note">La trama FM no genera moiré entre tintas, pero necesita mallas finas (sobre 120T) y buena exposición.</p>
+      </div>
+    </section>
+
+    <section class="grp">
+      <h2>Salida</h2>
+      <div class="two">
+        <div class="field"><label for="widthCm">Ancho de impresión (cm)</label><input type="number" id="widthCm" data-k="widthCm" min="2" max="80" step="0.5"></div>
+        <div class="field"><label for="dpi">Resolución</label><select id="dpi" data-k="dpi"><option value="300">300 DPI</option><option value="600">600 DPI</option><option value="720">720 DPI (Epson)</option><option value="1200">1200 DPI</option></select></div>
+      </div>
+      <div class="two">
+        <div class="field"><div class="row"><label for="minDot">Punto mínimo</label><output id="minDot-o"></output></div><input type="range" id="minDot" data-k="minDot" min="0" max="25" step="1"></div>
+        <div class="field"><div class="row"><label for="maxDot">Punto máximo</label><output id="maxDot-o"></output></div><input type="range" id="maxDot" data-k="maxDot" min="75" max="100" step="1"></div>
+      </div>
+      <div class="field"><div class="row"><label for="gain">Compensar ganancia de punto</label><output id="gain-o"></output></div><input type="range" id="gain" data-k="gain" min="0" max="30" step="1"><p class="note">La tinta se expande en la tela; esto adelgaza los medios tonos para que el resultado impreso coincida.</p></div>
+      <label class="check"><input type="checkbox" id="marks" data-k="marks"><span>Marcas de registro y rótulo de placa</span></label>
+      <label class="check"><input type="checkbox" id="mirror" data-k="mirror"><span>Imprimir en espejo<small>Para fotolitos que van con la tinta contra la emulsión.</small></span></label>
+      <label class="check"><input type="checkbox" id="transparent" data-k="transparent"><span>Fondo transparente en el PNG</span></label>
+      <p class="meta" id="outMeta"></p>
+    </section>
+  </aside>
+
+  <main class="stage" id="stage" aria-label="Vista previa">
+    <div class="toolbar">
+      <div class="seg" role="radiogroup" aria-label="Vista" data-k="view">
+        <button type="button" role="radio" data-v="composite">Sobre la prenda</button>
+        <button type="button" role="radio" data-v="plate">Fotolito</button>
+      </div>
+      <div class="zoom">
+        <button type="button" id="zOut" aria-label="Alejar">−</button>
+        <span class="zl" id="zLabel">—</span>
+        <button type="button" id="zIn" aria-label="Acercar">+</button>
+        <button type="button" id="zFit">Ajustar</button>
+        <button type="button" id="z100">100 %</button>
+      </div>
+    </div>
+    <canvas id="view"></canvas><canvas id="ov"></canvas>
+    <div class="hint" id="hint"></div>
+    <div class="loupe" id="loupe"><canvas id="loupeC"></canvas><span id="loupeL">Lupa</span></div>
+    <div class="busy" id="busy" hidden><div class="card"><b id="busyT">Generando fotolitos…</b><div class="bar"><i id="busyBar"></i></div><span class="note" id="busyS"></span></div></div>
+    <div class="dropcover" id="dropCover" hidden>Suelta la imagen para cargarla</div>
+  </main>
+
+  <aside class="panel rack" aria-label="Placas">
+    <div class="rack-head">
+      <h2>Placas <span class="n" id="plateCount"></span></h2>
+      <p class="note">En orden de impresión. Toca una placa para verla como fotolito; el ángulo se edita por placa.</p>
+      <div id="rackWarn"></div>
+    </div>
+    <div class="plates" id="plates"></div>
+    <div class="rack-foot">
+      <button class="btn primary" type="button" id="dlZip">Fotolitos PNG (.zip)</button>
+      <button class="btn" type="button" id="dlPdf">Fotolitos PDF</button>
+      <button class="btn" type="button" id="dlPreview">Vista previa (.png)</button>
+      <p class="note" id="dlNote">PNG de 1 bit o PDF a tamaño real, una página por placa, listos para imprimir en film.</p>
+    </div>
+  </aside>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<dialog id="projDlg" aria-labelledby="projTitle">
+  <div class="dlg">
+    <div class="dlg-head"><h2 id="projTitle">Proyectos</h2><button class="icon-btn" type="button" id="projClose" aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <form class="saveform" id="projForm">
+      <input type="text" id="projName" maxlength="80" aria-label="Nombre del proyecto" placeholder="Nombre del proyecto">
+      <button class="btn primary" type="submit">Guardar</button>
+    </form>
+    <p class="note">Se guarda la imagen, las tintas, los ajustes y los retoques. Los proyectos quedan en este navegador y no se suben a internet.</p>
+    <div class="projlist" id="projList"></div>
+  </div>
+</dialog>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
