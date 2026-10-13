@@ -9,7 +9,7 @@ App web gratuita para convertir cualquier imagen en fotolitos de semitono para s
 - **Base blanca automática** para prendas oscuras, con intensidad y contracción.
 - **Quitar fondo**
   - Por color: detecta fondos uniformes, cuentagotas, tolerancia, borde suave y limpieza del halo.
-  - Con IA, en el equipo del usuario: MODNet para personas y BiRefNet lite para cualquier objeto (este último necesita WebGPU). Los modelos se sirven desde el propio sitio.
+  - Con IA, en el equipo del usuario: MODNet para personas e ISNet para cualquier objeto. Usan la GPU (WebGPU) si está disponible y si no, la CPU. Los modelos se sirven desde el propio sitio.
   - Pincel para borrar o restaurar a mano, con deshacer.
 - **Tramas**
   - AM: seis formas de punto (redondo, euclidiano, elíptico, cuadrado, diamante y línea), con lineatura y ángulo por placa.
@@ -72,7 +72,7 @@ Al publicar una versión nueva, sube el número de `VERSION` en `sw.js` para que
 
 - [pdf.js](https://github.com/mozilla/pdf.js) (Apache-2.0) y [heic2any](https://github.com/alexcorvi/heic2any) (MIT) se cargan desde jsDelivr solo al abrir PDF/AI o fotos HEIC.
 - [ONNX Runtime Web](https://github.com/microsoft/onnxruntime) (MIT) se carga desde jsDelivr solo cuando se usa el quitado de fondo con IA.
-- Modelo [MODNet](https://huggingface.co/Xenova/modnet) (Apache-2.0) y modelo [BiRefNet lite](https://huggingface.co/onnx-community/BiRefNet_lite-ONNX) (MIT). Se alojan en `models/`, se descargan la primera vez que se usan y quedan guardados en el navegador. Para actualizarlos, ejecuta la acción **Descargar modelos de IA** en la pestaña Actions de GitHub.
+- Modelo [MODNet](https://huggingface.co/Xenova/modnet) (Apache-2.0) y modelo ISNet general use de [DIS](https://github.com/xuebinqin/DIS) (Apache-2.0), en la versión ONNX publicada por [rembg](https://github.com/danielgatis/rembg). Se alojan en `models/`, se descargan la primera vez que se usan y quedan guardados en el navegador. Para actualizarlos, ejecuta la acción **Descargar modelos de IA** en la pestaña Actions de GitHub.
 - Fuentes Big Shoulders Display e IBM Plex (SIL Open Font License) desde Google Fonts.
 
 ## Licencia

@@ -21,32 +21,18 @@ jobs:
       - name: Descargar y dividir
         run: |
           set -euo pipefail
-          rm -rf models && mkdir -p models/modnet models/birefnet /tmp/m
+          rm -rf models && mkdir -p models/modnet models/isnet /tmp/m
           curl -fL --retry 3 -o /tmp/m/modnet.onnx  https://huggingface.co/Xenova/modnet/resolve/main/onnx/model.onnx
-          curl -fL --retry 3 -o /tmp/m/birefnet-orig.onnx https://huggingface.co/onnx-community/BiRefNet_lite-ONNX/resolve/main/onnx/model.onnx
-          # Simplifica el grafo (forma de entrada fija 1024x1024): pliega constantes y resuelve los Slice
-          # dinámicos que hacen fallar a ONNX Runtime Web con WebGPU.
-          pip install --quiet onnx onnxsim onnxruntime
-          python3 - <<'EOF'
-          import onnx, collections
-          from onnxsim import simplify
-          m = onnx.load("/tmp/m/birefnet-orig.onnx")
-          before = collections.Counter(n.op_type for n in m.graph.node)
-          ms, ok = simplify(m)
-          assert ok, "onnxsim no pudo validar el modelo simplificado"
-          after = collections.Counter(n.op_type for n in ms.graph.node)
-          print("nodos:", len(m.graph.node), "->", len(ms.graph.node), "| Slice:", before["Slice"], "->", after["Slice"])
-          onnx.save(ms, "/tmp/m/birefnet.onnx")
-          EOF
+          curl -fL --retry 3 -o /tmp/m/isnet.onnx https://github.com/danielgatis/rembg/releases/download/v0.0.0/isnet-general-use.onnx
           split -b 20000000 -d -a 2 /tmp/m/modnet.onnx   models/modnet/model.onnx.part
-          split -b 20000000 -d -a 2 /tmp/m/birefnet.onnx models/birefnet/model.onnx.part
+          split -b 20000000 -d -a 2 /tmp/m/isnet.onnx   models/isnet/model.onnx.part
           python3 - <<'EOF'
           import json, os
           def info(d, src):
               parts = sorted(f for f in os.listdir(d) if '.part' in f)
               return {"files": [f"{os.path.basename(d)}/{p}" for p in parts], "size": os.path.getsize(src)}
           m = {"modnet": info("models/modnet", "/tmp/m/modnet.onnx"),
-               "birefnet": info("models/birefnet", "/tmp/m/birefnet.onnx")}
+               "isnet": info("models/isnet", "/tmp/m/isnet.onnx")}
           json.dump(m, open("models/models.json", "w"), indent=2)
           print(json.dumps(m, indent=2))
           EOF
@@ -56,7 +42,7 @@ jobs:
           Generados por `.github/workflows/modelos.yml`. Divididos en partes de 20 MB.
 
           - `modnet/`: [Xenova/modnet](https://huggingface.co/Xenova/modnet) (Apache-2.0), fp32.
-          - `birefnet/`: [onnx-community/BiRefNet_lite-ONNX](https://huggingface.co/onnx-community/BiRefNet_lite-ONNX) (MIT), fp32. La versión fp16 falla en ONNX Runtime Web con WebGPU.
+          - `isnet/`: ISNet general use (Apache-2.0, de [DIS](https://github.com/xuebinqin/DIS)), versión ONNX publicada por [rembg](https://github.com/danielgatis/rembg).
           EOF
 
       - name: Guardar en el repositorio

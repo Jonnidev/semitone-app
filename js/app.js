@@ -347,7 +347,7 @@ $('#addInk').onclick=()=>{if(S.spotInks.length>=10)return;const pool=['#FFFFFF',
 
 function renderBg(){$('#bgOpts').style.display=S.bgOn?'flex':'none';
   $('#bgColorOpts').hidden=S.bgMethod!=='color';$('#bgAiOpts').hidden=S.bgMethod!=='ai';
-  $('#aiModelNote').textContent=S.aiModel==='people'?'Para retratos y personas. Descarga de 26 MB la primera vez.':'Para productos, mascotas y objetos. Descarga de 224 MB la primera vez y necesita WebGPU (Chrome o Edge actualizados, o Safari 26).';
+  $('#aiModelNote').textContent=S.aiModel==='people'?'Para retratos y personas. Descarga de 26 MB la primera vez.':'Para productos, mascotas, ropa y objetos. Descarga de 179 MB la primera vez; luego queda guardado.';
   $('#aiRun').textContent=IMG.aiMatte&&IMG.aiModel===S.aiModel?'Volver a procesar con IA':'Quitar fondo con IA';
   $('#aiStatus').innerHTML=IMG.aiMatte?`<span class="pill ok">Máscara lista (${IMG.aiModel==='people'?'personas':'cualquier objeto'}, ${IMG.aiDevice==='webgpu'?'con GPU':'con CPU'}).</span>`:'';
   $('#bgChips').innerHTML=S.bgColors.length?S.bgColors.map((h,i)=>`<span class="bgchip"><i style="background:${h}"></i>${h}<button type="button" data-bgrm="${i}" aria-label="Quitar ${h}">${XI}</button></span>`).join(''):'<span class="note">Sin colores. Usa Detectar o elige uno en la imagen.</span>';

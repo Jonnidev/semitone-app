@@ -1,14 +1,14 @@
 // Quitar fondo con IA, todo en el navegador del usuario (ONNX Runtime Web).
 // Los modelos se sirven desde el propio sitio (carpeta /models), así no dependen de servicios externos.
 //  - MODNet (Apache-2.0): recorte de personas.
-//  - BiRefNet lite (MIT): cualquier objeto, alta calidad. Necesita WebGPU.
+//  - ISNet general use (Apache-2.0): cualquier objeto (productos, mascotas, logos fotografiados).
 const ORT_DIR = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.22.0/dist/';
 const MODELS_URL = new URL('../models/', import.meta.url);
 const CACHE = 'trama-modelos-v1';
 
 const CFG = {
   people: { key: 'modnet', size: 'short512', mean: [0.5, 0.5, 0.5], std: [0.5, 0.5, 0.5], needsGpu: false },
-  general: { key: 'birefnet', size: 1024, mean: [0.485, 0.456, 0.406], std: [0.229, 0.224, 0.225], needsGpu: true },
+  general: { key: 'isnet', size: 1024, mean: [0.5, 0.5, 0.5], std: [1, 1, 1], post: 'minmax' },
 };
 
 let ort = null, manifest = null;
@@ -65,17 +65,16 @@ async function fetchModel(key) {
 async function getSession(model) {
   if (sessions[model]) return sessions[model];
   const cfg = CFG[model], gpu = await hasWebGPU();
-  if (cfg.needsGpu && !gpu) throw new Error('El modelo "Cualquier objeto" necesita un navegador con WebGPU (Chrome o Edge actualizados, o Safari 26). Prueba con el modelo de personas.');
   await loadOrt();
   const bytes = await fetchModel(cfg.key);
   post({ stage: 'init' });
   let session, device = gpu ? 'webgpu' : 'wasm';
   try { session = await ort.InferenceSession.create(bytes, { executionProviders: gpu ? ['webgpu', 'wasm'] : ['wasm'], graphOptimizationLevel: 'all' }); }
   catch (e) {
-    if (!gpu || cfg.needsGpu) throw e;
+    if (!gpu) throw e;
     device = 'wasm'; session = await ort.InferenceSession.create(bytes, { executionProviders: ['wasm'] });
   }
-  return sessions[model] = { session, device };
+  return sessions[model] = { session, device, bytes };
 }
 
 /* ---------- utilidades numéricas ---------- */
@@ -109,6 +108,16 @@ function toTensorData(rgba, w, h, W, H, mean, std) {
 }
 
 async function run(model, rgba, w, h) {
+  try { return await runOnce(model, rgba, w, h); }
+  catch (e) {
+    // Si la GPU falla con este modelo, se repite en la CPU (más lento, pero funciona en cualquier equipo).
+    const s = sessions[model]; if (!s || s.device !== 'webgpu') throw e;
+    try { await s.session.release(); } catch (_) { /* nada */ }
+    sessions[model] = { session: await ort.InferenceSession.create(s.bytes, { executionProviders: ['wasm'] }), device: 'wasm', bytes: s.bytes };
+    return await runOnce(model, rgba, w, h);
+  }
+}
+async function runOnce(model, rgba, w, h) {
   const cfg = CFG[model], { session, device } = await getSession(model);
   post({ stage: 'run', device });
   let W, H;
@@ -128,10 +137,11 @@ async function run(model, rgba, w, h) {
   const t = out[session.outputNames[0]], dims = t.dims, oh = dims[dims.length - 2], ow = dims[dims.length - 1];
   let src = t.data;
   if (!(src instanceof Float32Array)) { const f = new Float32Array(ow * oh); for (let i = 0; i < f.length; i++) f[i] = src instanceof Uint16Array ? f16ToF32(src[i]) : Number(src[i]); src = f; }
-  // Si el modelo entrega logits (valores fuera de 0..1), se pasan por sigmoide.
+  // ISNet se normaliza entre su mínimo y su máximo; si otro modelo entrega logits, se pasan por sigmoide.
   let mn = Infinity, mx = -Infinity; for (let i = 0; i < ow * oh; i++) { const v = src[i]; if (v < mn) mn = v; if (v > mx) mx = v; }
-  const sig = mn < -0.01 || mx > 1.01, small = new Float32Array(ow * oh);
-  for (let i = 0; i < small.length; i++) { const v = src[i]; small[i] = sig ? 1 / (1 + Math.exp(-v)) : (v < 0 ? 0 : v > 1 ? 1 : v); }
+  const small = new Float32Array(ow * oh), range = mx - mn || 1;
+  if (cfg.post === 'minmax') for (let i = 0; i < small.length; i++) small[i] = (src[i] - mn) / range;
+  else { const sig = mn < -0.01 || mx > 1.01; for (let i = 0; i < small.length; i++) { const v = src[i]; small[i] = sig ? 1 / (1 + Math.exp(-v)) : (v < 0 ? 0 : v > 1 ? 1 : v); } }
   // Vuelve la máscara al tamaño de trabajo de la imagen.
   const matte = new Float32Array(w * h), kx = ow / w, ky = oh / h;
   for (let y = 0; y < h; y++) {
