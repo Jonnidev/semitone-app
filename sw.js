@@ -1,7 +1,7 @@
 // Service worker: permite usar la app sin conexión una vez cargada.
 // Siempre intenta la red primero, así cada publicación nueva se ve de inmediato;
 // la caché solo se usa cuando no hay conexión.
-const VERSION = 'trama-v4';
+const VERSION = 'trama-v5';
 const ASSETS = [
   './', './index.html', './css/app.css',
   './js/app.js', './js/core.js', './js/projects.js', './js/loaders.js', './js/plate-worker.js', './js/ai-worker.js',
